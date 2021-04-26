@@ -116,7 +116,7 @@ class Generator(nn.Module):
         return self.fade_in(alpha, final_up_scaled, final_out)
 
 
-class Discriminator(nn.Module):
+class Critic(nn.Module):
     def __init__(self, in_channels, img_channels):
         super().__init__()
         self.prog_blocks, self.rgb_layers = nn.ModuleList(), nn.ModuleList()
