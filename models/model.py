@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from math import log2
 
 factors = [1, 1, 1, 1, 1/2, 1/4, 1/8, 1/16, 1/32]
 
@@ -76,14 +75,15 @@ class Generator(nn.Module):
             nn.LeakyReLU(0.2),
             PixelNorm()
         )
-        self.initial_rgb = EqualizedLRConv2d(in_channels, img_channels, kernel_size=1, stride=1)
-        self.prog_blocks, self.rgb_layers = nn.ModuleList(), nn.ModuleList(self.initial_rgb)
+        self.initial_rgb = EqualizedLRConv2d(in_channels, img_channels, kernel_size=1, stride=1, padding=0)
+        self.prog_blocks, self.rgb_layers = nn.ModuleList(), nn.ModuleList([self.initial_rgb])
 
         for i in range(len(factors) - 1):
             conv_in_channels = int(in_channels * factors[i])
             conv_out_channels = int(in_channels * factors[i+1])
             self.prog_blocks.append(ConvBlock(conv_in_channels, conv_out_channels))
-            self.rgb_layers.append(EqualizedLRConv2d(conv_out_channels, img_channels, kernel_size=1, stride=1))
+            self.rgb_layers.append(EqualizedLRConv2d(conv_out_channels, img_channels,
+                                                     kernel_size=1, stride=1, padding=0))
 
     def fade_in(self, alpha, up_scaled, generated):
         """
@@ -126,10 +126,11 @@ class Discriminator(nn.Module):
             conv_in_channels = int(in_channels * factors[i])
             conv_out_channels = int(in_channels * factors[i-1])
             self.prog_blocks.append(ConvBlock(conv_in_channels, conv_out_channels, use_pixel_norm=False))
-            self.rgb_layers.append(EqualizedLRConv2d(img_channels, conv_in_channels, kernel_size=1, stride=1))
+            self.rgb_layers.append(EqualizedLRConv2d(img_channels, conv_in_channels,
+                                                     kernel_size=1, stride=1, padding=0))
 
         # for 4x4 res
-        self.initial_rgb = EqualizedLRConv2d(img_channels, in_channels, kernel_size=1, stride=1)    # 4x4
+        self.initial_rgb = EqualizedLRConv2d(img_channels, in_channels, kernel_size=1, stride=1, padding=0)    # 4x4
         self.rgb_layers.append(self.initial_rgb)
         self.avg_pool1 = nn.AvgPool2d(kernel_size=2, stride=2)
 
