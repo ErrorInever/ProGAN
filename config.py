@@ -1,5 +1,7 @@
+import logging
 from easydict import EasyDict as edict
 from math import log2
+
 
 __C = edict()
 # for consumers
@@ -9,6 +11,7 @@ __C.PROJECT_NAME = "ProGAN"
 __C.PROJECT_VERSION_NAME = "ProGAN default"
 __C.DATASET_NAME = ""
 # Global
+__C.SEED_VALUE = 9696
 __C.NUM_EPOCHS = 10
 __C.LEARNING_RATE = 1e-4
 __C.BATCH_SIZE = [16, 16, 16, 16, 16, 16, 16, 8, 4]
@@ -29,6 +32,24 @@ __C.PROGRESSIVE_EPOCHS = [20] * len(__C.BATCH_SIZE)
 __C.SAVE_EACH_EPOCH = 5
 __C.OUT_DIR = ''
 __C.SAVE_CHECKPOINT_PATH = ''
+__C.PATH_TO_LOG_FILE = 'data/logs/train.log'
 # Display results
 __C.NUM_SAMPLES = 16            # image grid shape <- sqrt(NUM_SAMPLES)
 __C.FREQ = 50                   # display frequency
+
+
+# init logs
+logger = logging.getLogger()
+c_handler = logging.StreamHandler()
+f_handler = logging.FileHandler(__C.PATH_TO_LOG_FILE, mode='w', encoding='utf-8')
+
+c_handler.setLevel(logging.INFO)
+f_handler.setLevel(logging.ERROR)
+c_format = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+f_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+c_handler.setFormatter(c_format)
+f_handler.setFormatter(f_format)
+logger.addHandler(c_handler)
+logger.addHandler(f_handler)
+logger.setLevel(logging.INFO)
+
