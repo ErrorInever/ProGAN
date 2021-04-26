@@ -88,19 +88,19 @@ class Generator(nn.Module):
     def fade_in(self, alpha, up_scaled, generated):
         """
         Interpolation
-        :param alpha: ``int``,  constant
-        :param up_scaled:
-        :param generated:
-        :return: value between [-1, 1]
+        :param alpha: ``float``,  const
+        :param up_scaled: interpolation nearest neighbor
+        :param generated: out
+        :return: interpolation in range [-1, 1]
         """
         return torch.tanh(alpha * generated + (1 - alpha) * up_scaled)
 
     def forward(self, x, alpha, steps):
         """
-        :param x:
-        :param alpha:
+        :param x: input
+        :param alpha: ``int`` cont
         :param steps: if steps=0 then 4x4, else if steps=1 then 8x8, ...
-        :return:
+        :return: out
         """
         out = self.initial(x)   # 4x4
 
@@ -145,10 +145,11 @@ class Discriminator(nn.Module):
 
     def fade_in(self, alpha, out, down_scaled):
         """
-        :param alpha:
+        Interpolation
+        :param alpha: ``float`` const
         :param out: out from conv layer
         :param down_scaled: out from average pooling
-        :return:
+        :return: interpolation
         """
         return alpha * out + (1 - alpha) * down_scaled
 
