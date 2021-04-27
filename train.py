@@ -2,10 +2,12 @@ import argparse
 import time
 import logging
 import torch
-import torch_xla.core.xla_model as xm
+#import torch_xla.core.xla_model as xm
 import torch.optim as optim
 from math import log2
-from utils import print_epoch_time, get_train_dataloader, load_checkpoint, save_checkpoint, gradient_penalty
+from tqdm import tqdm
+from utils import (print_epoch_time, get_train_dataloader, load_checkpoint, save_checkpoint, gradient_penalty,
+                   load_fixed_noise, save_fixed_noise)
 from config import cfg
 from models.model import Generator, Critic
 from metriclogger import MetricLogger
@@ -19,6 +21,8 @@ def parse_args():
                         default=None, type=str)
     parser.add_argument('--checkpoint_crt', dest='checkpoint_path_crt', help='path to crt.pth.tar',
                         default=None, type=str)
+    parser.add_argument('--fixed_noise', dest='fixed_noise', help='path to fixed_noise.pth.tar',
+                        default=None, type=str)
     parser.add_argument('--wandb_id', dest='wandb_id', help='wand metric id for resume',
                         default=None, type=str)
     parser.add_argument('--device', dest='device', help='use device: gpu, tpu. Default use gpu if available',
@@ -29,8 +33,10 @@ def parse_args():
 
 @print_epoch_time
 def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
-                    dataloader, metric_logger ,dataset, step, alpha, device):
-    for batch_idx, real in enumerate(dataloader):
+                    dataloader, metric_logger, dataset, step, alpha, device, fixed_noise, epoch, stage):
+
+    loop = tqdm(dataloader, leave=True)
+    for batch_idx, real in enumerate(loop):
         real = real.to(device)
         cur_batch_size = real.shape[0]
 
@@ -42,8 +48,8 @@ def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
             critic_fake = critic(fake.detach(), alpha, step)
             gp = gradient_penalty(critic, real, fake, alpha, step, device=device)
             loss_critic = (
-                -(torch.mean(critic_real) - torch.mean(critic_fake))
-                + cfg.LAMBDA_GP * gp + (0.001 * torch.mean(critic_real ** 2))
+                    -(torch.mean(critic_real) - torch.mean(critic_fake))
+                    + cfg.LAMBDA_GP * gp + (0.001 * torch.mean(critic_real ** 2))
             )
         opt_crt.zero_grad()
         scaler_crt.scale(loss_critic).backward()
@@ -65,9 +71,14 @@ def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
 
         if batch_idx % cfg.FREQ == 0:
             with torch.no_grad():
-                # TODO metrics
-                # TODO fixed noise
-                pass
+                fixed_fakes = gen(fixed_noise, alpha, step) * 0.5 + 0.5
+                metric_logger.log(loss_critic, loss_gen)
+                metric_logger.log_image(fixed_fakes, cfg.NUM_SAMPLES, epoch, stage)
+
+        loop.set_postfix(
+            gp=gp.item(),
+            loss_critic=loss_critic.item(),
+        )
 
         return alpha
 
@@ -86,8 +97,8 @@ if __name__ == '__main__':
 
     if args.device == 'gpu':
         device = torch.device('cuda')
-    elif args.device == 'tpu':
-        device = xm.xla_device()
+    # elif args.device == 'tpu':
+    #     device = xm.xla_device()
     elif args.device is None and not torch.cuda.is_available():
         logger.error(f"device:{args.device}", exc_info=True)
         raise ValueError('Device not specified and gpu is not available')
@@ -107,9 +118,16 @@ if __name__ == '__main__':
     if args.checkpoint_path_gen and args.checkpoint_path_crt:
         load_checkpoint(args.checkpoint_path_gen, gen, opt_gen, cfg.LEARNING_RATE)  # load generator
         load_checkpoint(args.checkpoint_path_crt, crt, opt_crt, cfg.LEARNING_RATE)  # load critic
+        if args.fixed_noise:
+            fixed_noise = load_fixed_noise(args.fixed_noise)
+            fixed_noise.to(device)
+        else:
+            raise ValueError("fixed noise not specified")
         metric_logger = MetricLogger(project_version_name=cfg.PROJECT_VERSION_NAME, resume_id=True)
     else:
+        # defining standard params
         metric_logger = MetricLogger(project_version_name=cfg.PROJECT_VERSION_NAME)
+        fixed_noise = torch.randn(4, cfg.Z_DIMENSION, 1, 1).to(device)
 
     gen.train()
     crt.train()
@@ -118,15 +136,16 @@ if __name__ == '__main__':
     step = int(log2(cfg.START_TRAIN_IMG_SIZE / 4))
     for num_epochs in cfg.PROGRESSIVE_EPOCHS[step:]:
         alpha = 1e-5
-        dataset, train_dataloader = get_train_dataloader(args.data_path, 4*2**step)
-        logger.info(f"Current image size: {4*2**step}")
+        dataset, train_dataloader = get_train_dataloader(args.data_path, 4 * 2 ** step)
+        logger.info(f"Current image size: {4 * 2 ** step}")
 
         for epoch in range(num_epochs):
-            logger.info(f"Epoch [{epoch+1}/{num_epochs}]")
-            # TODO train one epoch
+            logger.info(f"Epoch [{epoch + 1}/{num_epochs}]")
+            alpha = train_one_epoch(gen, crt, opt_gen, opt_crt, scaler_gen, scaler_crt, train_dataloader, metric_logger,
+                                    dataset, step, alpha, device, fixed_noise, epoch, stage=4*2**step)
             if cfg.SAVE_MODEL:
-                save_checkpoint(gen, opt_gen, filename=f"gen_img{4*2**step}_epoch{epoch}.pth.tar")
-                save_checkpoint(crt, opt_crt, filename=f"crt_img{4*2**step}_epoch{epoch}.pth.tar")
-
+                save_checkpoint(gen, opt_gen, filename=f"gen_img{4 * 2 ** step}_epoch{epoch}.pth.tar")
+                save_checkpoint(crt, opt_crt, filename=f"crt_img{4 * 2 ** step}_epoch{epoch}.pth.tar")
+                save_fixed_noise(fixed_noise, filename=f"fixed_noise{4 * 2 ** step}_epoch{epoch}.pth.tar")
         # do progress to the next image size
         step += 1
