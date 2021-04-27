@@ -1,20 +1,23 @@
 import argparse
 import time
 import logging
-import os
 import torch
 import torch_xla.core.xla_model as xm
-from torch.utils.data import DataLoader
-from utils import print_epoch_time
-from data.dataset import AnimeFacesDataset
+import torch.optim as optim
+from math import log2
+from utils import print_epoch_time, get_train_dataloader, load_checkpoint, save_checkpoint, gradient_penalty
 from config import cfg
+from models.model import Generator, Critic
+from metriclogger import MetricLogger
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='ProGAN')
     parser.add_argument('--data_path', dest='data_path', help='path to dataset folder',
                         default=None, type=str)
-    parser.add_argument('--checkpoint_path', dest='checkpoint_path', help='path to checkpoint.pth.tar',
+    parser.add_argument('--checkpoint_gen', dest='checkpoint_path_gen', help='path to gen.pth.tar',
+                        default=None, type=str)
+    parser.add_argument('--checkpoint_crt', dest='checkpoint_path_crt', help='path to crt.pth.tar',
                         default=None, type=str)
     parser.add_argument('--wandb_id', dest='wandb_id', help='wand metric id for resume',
                         default=None, type=str)
@@ -25,8 +28,48 @@ def parse_args():
 
 
 @print_epoch_time
-def train_one_epoch():
-    pass
+def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
+                    dataloader, metric_logger ,dataset, step, alpha, device):
+    for batch_idx, real in enumerate(dataloader):
+        real = real.to(device)
+        cur_batch_size = real.shape[0]
+
+        # Train critic: maximize(E[critic(real)] - E[critic(fake)]) or (-1 * maximize(E[critic(real)]) + E[critic(fake)]
+        noise = torch.randn(cur_batch_size, cfg.Z_DIMENSION, 1, 1).to(device)
+        with torch.cuda.amp.autocast():
+            fake = gen(noise, alpha, step)
+            critic_real = critic(real, alpha, step)
+            critic_fake = critic(fake.detach(), alpha, step)
+            gp = gradient_penalty(critic, real, fake, alpha, step, device=device)
+            loss_critic = (
+                -(torch.mean(critic_real) - torch.mean(critic_fake))
+                + cfg.LAMBDA_GP * gp + (0.001 * torch.mean(critic_real ** 2))
+            )
+        opt_crt.zero_grad()
+        scaler_crt.scale(loss_critic).backward()
+        scaler_crt.step(opt_crt)
+        scaler_crt.update()
+
+        # Train generator maximize(E[critic(gen_fake)] <-> min -E[critic(gen_fake)])
+        with torch.cuda.amp.autocast():
+            gen_fake = critic(fake, alpha, step)
+            loss_gen = -torch.mean(gen_fake)
+        opt_gen.zero_grad()
+        scaler_gen.scale(loss_gen).backward()
+        scaler_gen.step(opt_gen)
+        scaler_gen.update()
+
+        # update alpha
+        alpha += cur_batch_size / (cfg.PROGRESSIVE_EPOCHS[step] * 0.5) * len(dataset)
+        alpha = min(alpha, 1)
+
+        if batch_idx % cfg.FREQ == 0:
+            with torch.no_grad():
+                # TODO metrics
+                # TODO fixed noise
+                pass
+
+        return alpha
 
 
 if __name__ == '__main__':
@@ -34,6 +77,8 @@ if __name__ == '__main__':
     args = parse_args()
 
     assert args.data_path, 'data path not specified'
+    if args.resume_id:
+        cfg.RESUME_ID = args.resume_id
 
     logger.info(f'Start {__name__} at {time.ctime()}')
     logger.info(f'Called with args: {args.__dict__}')
@@ -46,11 +91,42 @@ if __name__ == '__main__':
     elif args.device is None and not torch.cuda.is_available():
         logger.error(f"device:{args.device}", exc_info=True)
         raise ValueError('Device not specified and gpu is not available')
-
     logger.info(f'Using device:{args.device}')
+    torch.backends.cudnn.benchmarks = True
 
-    # TODO step batch
-    dataset = AnimeFacesDataset(args.data_path)
-    # train_dataloader = DataLoader(dataset, batch_size=cfg.BATCH_SIZE, shuffle=True,
-    #                               num_workers=2, drop_last=True, pin_memory=True)
-    # TODO define models, optimizers and load checkpoint
+    # models
+    gen = Generator(cfg.Z_DIMENSION, cfg.IN_CHANNELS, cfg.CHANNELS_IMG).to(device)
+    crt = Critic(cfg.IN_CHANNELS, cfg.CHANNELS_IMG).to(device)
+    # optimizers
+    opt_gen = optim.Adam(gen.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.99))
+    opt_crt = optim.Adam(crt.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.99))
+    # scalers
+    scaler_gen = torch.cuda.amp.GradScaler()
+    scaler_crt = torch.cuda.amp.GradScaler()
+    # load models if resume
+    if args.checkpoint_path_gen and args.checkpoint_path_crt:
+        load_checkpoint(args.checkpoint_path_gen, gen, opt_gen, cfg.LEARNING_RATE)  # load generator
+        load_checkpoint(args.checkpoint_path_crt, crt, opt_crt, cfg.LEARNING_RATE)  # load critic
+        metric_logger = MetricLogger(project_version_name=cfg.PROJECT_VERSION_NAME, resume_id=True)
+    else:
+        metric_logger = MetricLogger(project_version_name=cfg.PROJECT_VERSION_NAME)
+
+    gen.train()
+    crt.train()
+
+    # train start at step that corresponds to img size that we set in cfg.START_TRAIN_IMG_SIZE
+    step = int(log2(cfg.START_TRAIN_IMG_SIZE / 4))
+    for num_epochs in cfg.PROGRESSIVE_EPOCHS[step:]:
+        alpha = 1e-5
+        dataset, train_dataloader = get_train_dataloader(args.data_path, 4*2**step)
+        logger.info(f"Current image size: {4*2**step}")
+
+        for epoch in range(num_epochs):
+            logger.info(f"Epoch [{epoch+1}/{num_epochs}]")
+            # TODO train one epoch
+            if cfg.SAVE_MODEL:
+                save_checkpoint(gen, opt_gen, filename=f"gen_img{4*2**step}_epoch{epoch}.pth.tar")
+                save_checkpoint(crt, opt_crt, filename=f"crt_img{4*2**step}_epoch{epoch}.pth.tar")
+
+        # do progress to the next image size
+        step += 1
