@@ -26,10 +26,9 @@ class AnimeFacesDataset(Dataset):
     @property
     def transform(self):
         return transforms.Compose([transforms.Resize(cfg.IMG_SIZE),
-                                   # transforms.CenterCrop(cfg.IMG_SIZE),
-                                   transforms.RandomHorizontalFlip(),
+                                   transforms.RandomHorizontalFlip(p=0.5),
                                    transforms.ToTensor(),
-                                   transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                                                        std=[0.5, 0.5, 0.5])
+                                   transforms.Normalize(mean=[0.5 for _ in range(cfg.CHANNELS_IMG)],
+                                                        std=[0.5 for _ in range(cfg.CHANNELS_IMG)])
                                    ])
 
