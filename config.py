@@ -25,15 +25,14 @@ __C.Z_DIMENSION = 256
 __C.IN_CHANNELS = 256
 # Grow
 __C.NUM_STEPS = int(log2(__C.IMG_SIZE / 4)) + 1
-__C.PROGRESSIVE_EPOCHS = [20] * len(__C.BATCH_SIZE)
+__C.PROGRESSIVE_EPOCHS = [30] * len(__C.BATCH_SIZE)
 # Paths and saves
 __C.SAVE_MODEL = True
 __C.OUT_DIR = ''
 __C.SAVE_CHECKPOINT_PATH = ''
 __C.PATH_TO_LOG_FILE = 'data/logs/train.log'
 # Display results
-__C.NUM_SAMPLES = 16            # image grid shape <- sqrt(NUM_SAMPLES)
-__C.FREQ = 50                   # display frequency
+__C.NUM_SAMPLES = 4            # image grid shape <- sqrt(NUM_SAMPLES)
 __C.RESUME_ID = None
 # init logs
 logger = logging.getLogger()
