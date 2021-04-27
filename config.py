@@ -11,33 +11,30 @@ __C.PROJECT_NAME = "ProGAN"
 __C.PROJECT_VERSION_NAME = "ProGAN default"
 __C.DATASET_NAME = ""
 # Global
-__C.SEED_VALUE = 9696
-__C.NUM_EPOCHS = 10
-__C.LEARNING_RATE = 1e-4
+__C.LEARNING_RATE = 1e-3
 __C.BATCH_SIZE = [16, 16, 16, 16, 16, 16, 16, 8, 4]
 # Gradient penalty
-__C.CRITIC_ITERATIONS = 5
+__C.CRITIC_ITERATIONS = 1
 __C.LAMBDA_GP = 10
 # SHAPES
+__C.START_TRAIN_IMG_SIZE = 4    # we start from 4x4 images
 __C.IMG_SIZE = 256
 __C.CHANNELS_IMG = 3
 __C.Z_DIMENSION = 256
 # Models features
-__C.FEATURES_CRT = 64
-__C.FEATURES_GEN = 64
+__C.IN_CHANNELS = 256
 # Grow
 __C.NUM_STEPS = int(log2(__C.IMG_SIZE / 4)) + 1
 __C.PROGRESSIVE_EPOCHS = [20] * len(__C.BATCH_SIZE)
 # Paths and saves
-__C.SAVE_EACH_EPOCH = 5
+__C.SAVE_MODEL = True
 __C.OUT_DIR = ''
 __C.SAVE_CHECKPOINT_PATH = ''
 __C.PATH_TO_LOG_FILE = 'data/logs/train.log'
 # Display results
 __C.NUM_SAMPLES = 16            # image grid shape <- sqrt(NUM_SAMPLES)
 __C.FREQ = 50                   # display frequency
-
-
+__C.RESUME_ID = None
 # init logs
 logger = logging.getLogger()
 c_handler = logging.StreamHandler()
