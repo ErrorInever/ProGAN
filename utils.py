@@ -57,7 +57,7 @@ def gradient_penalty(critic, real, fake, alpha, train_step, device="cpu"):
 
 
 def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
-    logger.info(f"Saving {filename} ...")
+    logger.info(f"Saving model ...")
     checkpoint = {
         "state_dict": model.state_dict(),
         "optimizer": optimizer.state_dict()
@@ -76,3 +76,16 @@ def load_checkpoint(checkpoint_file, model, optimizer, lr):
         param_group["lr"] = lr
 
     logger.info(f"Success loaded model from {checkpoint_file}")
+
+
+def save_fixed_noise(fixed_noise, filename="fixed_noise.pth.tar"):
+    logger.info(f"Saving fixed noise...")
+    fixed_noise = {'fixed_noise': fixed_noise}
+    torch.save(fixed_noise, filename)
+    logger.info(f"Save fixed noise to {filename}")
+
+
+def load_fixed_noise(checkpoint_file):
+    checkpoint = torch.load(checkpoint_file, map_location="cuda")
+    logger.info(f"Success loaded fixed noise from {checkpoint_file}")
+    return checkpoint['fixed_noise']
