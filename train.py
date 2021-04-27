@@ -4,8 +4,9 @@ import logging
 import os
 import torch
 import torch_xla.core.xla_model as xm
-
+from torch.utils.data import DataLoader
 from utils import print_epoch_time
+from data.dataset import AnimeFacesDataset
 from config import cfg
 
 
@@ -32,6 +33,8 @@ if __name__ == '__main__':
     logger = logging.getLogger('train')
     args = parse_args()
 
+    assert args.data_path, 'data path not specified'
+
     logger.info(f'Start {__name__} at {time.ctime()}')
     logger.info(f'Called with args: {args.__dict__}')
     logger.info(f'Config params: {cfg.__dict__}')
@@ -46,5 +49,8 @@ if __name__ == '__main__':
 
     logger.info(f'Using device:{args.device}')
 
-    # TODO define dataset and dataloader
+    # TODO step batch
+    dataset = AnimeFacesDataset(args.data_path)
+    # train_dataloader = DataLoader(dataset, batch_size=cfg.BATCH_SIZE, shuffle=True,
+    #                               num_workers=2, drop_last=True, pin_memory=True)
     # TODO define models, optimizers and load checkpoint
