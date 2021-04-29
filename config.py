@@ -37,7 +37,7 @@ __C.RESUME_ID = None
 # init logs
 logger = logging.getLogger()
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler(__C.PATH_TO_LOG_FILE, mode='w', encoding='utf-8')
+f_handler = logging.FileHandler(__C.PATH_TO_LOG_FILE, mode='a', encoding='utf-8')
 
 c_handler.setLevel(logging.INFO)
 f_handler.setLevel(logging.ERROR)
