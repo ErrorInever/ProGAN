@@ -27,6 +27,8 @@ def parse_args():
                         default=None, type=str)
     parser.add_argument('--device', dest='device', help='use device: gpu, tpu. Default use gpu if available',
                         default=None, type=str)
+    parser.add_argument('--out_dir', dest='out_dir', help='path where to save checkpoints, fixed images etc',
+                        default=None, type=str)
     parser.print_help()
     return parser.parse_args()
 
@@ -92,6 +94,9 @@ if __name__ == '__main__':
     if args.wandb_id:
         cfg.RESUME_ID = args.resume_id
 
+    if args.save_path:
+        cfg.OUT_DIR = args.out_dir
+
     logger.info(f'Start {__name__} at {time.ctime()}')
     logger.info(f'Called with args: {args.__dict__}')
     logger.info(f'Config params: {cfg.__dict__}')
@@ -134,8 +139,6 @@ if __name__ == '__main__':
     crt.train()
 
     # train start at step that corresponds to img size that we set in cfg.START_TRAIN_IMG_SIZE
-
-    # TODO fix save checkpoint, add steps
     step = int(log2(cfg.START_TRAIN_IMG_SIZE / 4))
     for num_epochs in cfg.PROGRESSIVE_EPOCHS[step:]:
         alpha = 1

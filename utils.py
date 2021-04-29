@@ -1,6 +1,7 @@
 import time
 import torch
 import logging
+import os
 from math import log2
 from config import cfg
 from data.dataset import AnimeFacesDataset
@@ -62,8 +63,9 @@ def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
         "state_dict": model.state_dict(),
         "optimizer": optimizer.state_dict()
     }
-    torch.save(checkpoint, filename)
-    logger.info(f"Success saved to {filename}")
+    save_model_path = os.path.join(cfg.OUT_DIR, filename)
+    torch.save(checkpoint, save_model_path)
+    logger.info(f"Success saved to {save_model_path}")
 
 
 def load_checkpoint(checkpoint_file, model, optimizer, lr):
@@ -81,8 +83,9 @@ def load_checkpoint(checkpoint_file, model, optimizer, lr):
 def save_fixed_noise(fixed_noise, filename="fixed_noise.pth.tar"):
     logger.info(f"Saving fixed noise...")
     fixed_noise = {'fixed_noise': fixed_noise}
-    torch.save(fixed_noise, filename)
-    logger.info(f"Save fixed noise to {filename}")
+    save_fixed_noise_path = os.path.join(cfg.OUT_DIR, filename)
+    torch.save(fixed_noise, save_fixed_noise_path)
+    logger.info(f"Save fixed noise to {save_fixed_noise_path}")
 
 
 def load_fixed_noise(checkpoint_file):

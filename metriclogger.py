@@ -18,7 +18,7 @@ class MetricLogger:
         """
         self.project_version_name = project_version_name
         self.show_acc = show_accuracy
-        self.data_subdir = f"{os.path.join(cfg.OUT_DIR, self.project_version_name)}/imgdata"
+        self.data_subdir = f"{os.path.join(cfg.OUT_DIR, self.project_version_name)}/fixed_images"
 
         if wab:
             if resume_id:
@@ -29,8 +29,11 @@ class MetricLogger:
             wandb.config.update({
                 'learning_rate': cfg.LEARNING_RATE,
                 'z_dimension': cfg.Z_DIMENSION,
-                'in_channels': cfg.IN_CHANNELS,
+                'model_depth': cfg.IN_CHANNELS,
+                'critic_iter_count': cfg.CRITIC_ITERATIONS,
+                'lambda gp': cfg.LAMBDA_GP,
                 'prog_epochs': cfg.PROGRESSIVE_EPOCHS,
+                'batch_sizes': cfg.BATCH_SIZE,
             })
 
     def log(self, crt_loss, gen_loss, acc_real=None, acc_fake=None):

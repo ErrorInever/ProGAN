@@ -9,10 +9,10 @@ cfg = __C
 # NAMES
 __C.PROJECT_NAME = "ProGAN"
 __C.PROJECT_VERSION_NAME = "ProGAN default"
-__C.DATASET_NAME = ""
+__C.DATASET_NAME = "AnimeFaces_256px"
 # Global
 __C.LEARNING_RATE = 1e-3
-__C.BATCH_SIZE = [16, 16, 16, 16, 16, 16, 16, 8, 4]
+__C.BATCH_SIZE = [128, 128, 128, 64, 32, 16, 8, 4, 4]
 # Gradient penalty
 __C.CRITIC_ITERATIONS = 1
 __C.LAMBDA_GP = 10
@@ -29,7 +29,6 @@ __C.PROGRESSIVE_EPOCHS = [30] * len(__C.BATCH_SIZE)
 # Paths and saves
 __C.SAVE_MODEL = True
 __C.OUT_DIR = ''
-__C.SAVE_CHECKPOINT_PATH = ''
 __C.PATH_TO_LOG_FILE = 'data/logs/train.log'
 # Display results
 __C.NUM_SAMPLES = 4            # image grid shape <- sqrt(NUM_SAMPLES)
@@ -48,4 +47,3 @@ f_handler.setFormatter(f_format)
 logger.addHandler(c_handler)
 logger.addHandler(f_handler)
 logger.setLevel(logging.INFO)
-
