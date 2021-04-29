@@ -94,7 +94,7 @@ class MetricLogger:
         :param num_batches: ``int``, numbers bathes
         """
         MetricLogger._make_dir(out_dir)
-        image_name = f"epoch{epoch}_{stage}.jpg"
+        image_name = f"size{stage}_epoch_{epoch}.jpg"
         fig.savefig('{}/{}'.format(out_dir, image_name))
 
     @staticmethod
