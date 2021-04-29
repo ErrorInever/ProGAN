@@ -32,6 +32,7 @@ __C.OUT_DIR = ''
 __C.PATH_TO_LOG_FILE = 'data/logs/train.log'
 # Display results
 __C.NUM_SAMPLES = 4            # image grid shape <- sqrt(NUM_SAMPLES)
+__C.FREQ = 100
 __C.RESUME_ID = None
 # init logs
 logger = logging.getLogger()
