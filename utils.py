@@ -27,7 +27,7 @@ def get_train_dataloader(data_path, img_size):
     :param img_size: img size
     :return: dataset, dataloader
     """
-    batch_size = cfg.BATCH_SIZES[int(log2(img_size / 4))]
+    batch_size = cfg.BATCH_SIZE[int(log2(img_size / 4))]
     dataset = AnimeFacesDataset(data_path)
     train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
     return dataset, train_dataloader

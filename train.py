@@ -33,7 +33,8 @@ def parse_args():
 
 @print_epoch_time
 def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
-                    dataloader, metric_logger, dataset, step, alpha, device, fixed_noise, epoch, stage):
+                    dataloader, metric_logger, dataset, step, alpha, device,
+                    fixed_noise, epoch, stage):
 
     loop = tqdm(dataloader, leave=True)
     for batch_idx, real in enumerate(loop):
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     assert args.data_path, 'data path not specified'
-    if args.resume_id:
+    if args.wandb_id:
         cfg.RESUME_ID = args.resume_id
 
     logger.info(f'Start {__name__} at {time.ctime()}')
@@ -133,9 +134,11 @@ if __name__ == '__main__':
     crt.train()
 
     # train start at step that corresponds to img size that we set in cfg.START_TRAIN_IMG_SIZE
+
+    # TODO fix save checkpoint, add steps
     step = int(log2(cfg.START_TRAIN_IMG_SIZE / 4))
     for num_epochs in cfg.PROGRESSIVE_EPOCHS[step:]:
-        alpha = 1e-5
+        alpha = 1
         dataset, train_dataloader = get_train_dataloader(args.data_path, 4 * 2 ** step)
         logger.info(f"Current image size: {4 * 2 ** step}")
 
