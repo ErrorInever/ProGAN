@@ -94,7 +94,7 @@ if __name__ == '__main__':
     if args.wandb_id:
         cfg.RESUME_ID = args.resume_id
 
-    if args.save_path:
+    if args.out_dir:
         cfg.OUT_DIR = args.out_dir
 
     logger.info(f'Start {__name__} at {time.ctime()}')

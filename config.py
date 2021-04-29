@@ -29,7 +29,7 @@ __C.PROGRESSIVE_EPOCHS = [30] * len(__C.BATCH_SIZE)
 # Paths and saves
 __C.SAVE_MODEL = True
 __C.OUT_DIR = ''
-__C.PATH_TO_LOG_FILE = 'data/logs/train.log'
+__C.PATH_TO_LOG_FILE = 'ProGAN/data/logs/train.log'
 # Display results
 __C.NUM_SAMPLES = 4            # image grid shape <- sqrt(NUM_SAMPLES)
 __C.FREQ = 100
