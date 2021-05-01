@@ -142,8 +142,9 @@ if __name__ == '__main__':
     step = int(log2(cfg.START_TRAIN_IMG_SIZE / 4))
     for num_epochs in cfg.PROGRESSIVE_EPOCHS[step:]:
         alpha = 1
-        dataset, train_dataloader = get_train_dataloader(args.data_path, 4 * 2 ** step)
-        logger.info(f"Current image size: {4 * 2 ** step}")
+        cfg.IMG_SIZE = 4 * 2 ** step
+        dataset, train_dataloader = get_train_dataloader(args.data_path, cfg.IMG_SIZE)
+        logger.info(f"Current image size: {cfg.IMG_SIZE}")
 
         for epoch in range(num_epochs):
             logger.info(f"Epoch [{epoch + 1}/{num_epochs}]")
