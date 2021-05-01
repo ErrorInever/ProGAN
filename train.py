@@ -83,7 +83,7 @@ def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
             loss_critic=loss_critic.item(),
         )
 
-        return alpha
+    return alpha
 
 
 if __name__ == '__main__':
