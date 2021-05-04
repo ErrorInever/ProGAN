@@ -29,6 +29,8 @@ def parse_args():
                         default=None, type=str)
     parser.add_argument('--out_dir', dest='out_dir', help='path where to save checkpoints, fixed images etc',
                         default=None, type=str)
+    parser.add_argument('--start_epoch', dest='start_epoch', help='start from current epoch for resume training',
+                        default=None, type=int)
     parser.print_help()
     return parser.parse_args()
 
@@ -97,6 +99,11 @@ if __name__ == '__main__':
     if args.out_dir:
         cfg.OUT_DIR = args.out_dir
 
+    if args.start_epoch:
+        start_epoch = args.start_epoch
+    else:
+        start_epoch = 0
+
     logger.info(f'Start {__name__} at {time.ctime()}')
     logger.info(f'Called with args: {args.__dict__}')
     logger.info(f'Config params: {cfg.__dict__}')
@@ -146,7 +153,7 @@ if __name__ == '__main__':
         dataset, train_dataloader = get_train_dataloader(args.data_path, cfg.IMG_SIZE)
         logger.info(f"Current image size: {cfg.IMG_SIZE}")
 
-        for epoch in range(num_epochs):
+        for epoch in range(start_epoch, num_epochs):
             logger.info(f"Epoch [{epoch + 1}/{num_epochs}]")
             alpha = train_one_epoch(gen, crt, opt_gen, opt_crt, scaler_gen, scaler_crt, train_dataloader, metric_logger,
                                     dataset, step, alpha, device, fixed_noise, epoch, stage=4*2**step)
@@ -156,3 +163,4 @@ if __name__ == '__main__':
                 save_fixed_noise(fixed_noise, filename=f"fixed_noise{4 * 2 ** step}_epoch{epoch}.pth.tar")
         # do progress to the next image size
         step += 1
+        start_epoch = 0
