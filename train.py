@@ -92,9 +92,9 @@ def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
 
 
 if __name__ == '__main__':
-    os.environ["WANDB_API_KEY"] = args.api
     logger = logging.getLogger('train')
     args = parse_args()
+    os.environ["WANDB_API_KEY"] = args.api
 
     assert args.data_path, 'data path not specified'
     if args.wandb_id:
