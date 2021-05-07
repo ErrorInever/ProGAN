@@ -17,7 +17,7 @@ __C.BATCH_SIZE = [128, 128, 128, 64, 32, 16, 8, 4, 4]
 __C.CRITIC_ITERATIONS = 1
 __C.LAMBDA_GP = 10
 # SHAPES
-__C.START_TRAIN_IMG_SIZE = 4    # we start from 4x4 images
+__C.START_TRAIN_IMG_SIZE = 64    # we start from 4x4 images
 __C.IMG_SIZE = 256
 __C.CHANNELS_IMG = 3
 __C.Z_DIMENSION = 256
