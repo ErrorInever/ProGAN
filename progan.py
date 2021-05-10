@@ -73,9 +73,10 @@ if __name__ == '__main__':
             output.append(res)
 
         images = []
-        for img in output:
-            img = img.detach().permute(1, 2, 0)
-            images.append(img.numpy())
+        for batch in output:
+            for img in batch:
+                img = img.detach().permute(1, 2, 0)
+                images.append(img.numpy())
         save_img_name = 'result.gif'
         save_path = os.path.join(out_path, save_img_name)
         imageio.mimsave(save_path, images, fps=8)
