@@ -32,7 +32,7 @@ def parse_args():
                         default=None, type=str)
     parser.add_argument('--start_epoch', dest='start_epoch', help='start from current epoch for resume training',
                         default=None, type=int)
-    parser.add_argument('--api', dest='api', help='wandb_api',
+    parser.add_argument('--api', dest='api', help='load wandb key for kaggle',
                         default=None, type=str)
     parser.print_help()
     return parser.parse_args()
@@ -94,7 +94,9 @@ def train_one_epoch(gen, critic, opt_gen, opt_crt, scaler_gen, scaler_crt,
 if __name__ == '__main__':
     logger = logging.getLogger('train')
     args = parse_args()
-    os.environ["WANDB_API_KEY"] = args.api
+
+    if args.api:
+        os.environ["WANDB_API_KEY"] = args.api
 
     assert args.data_path, 'data path not specified'
     if args.wandb_id:
