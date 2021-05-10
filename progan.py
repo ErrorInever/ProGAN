@@ -72,7 +72,6 @@ if __name__ == '__main__':
             images = batch.to(device)
             res = gen(images, alpha, step)
             if args.resize and isinstance(args.resize, int):
-                print(f"==> Resize images to {args.resize}px")
                 res = F.interpolate(res, size=args.resize)
             output.append(res)
 
