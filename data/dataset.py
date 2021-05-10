@@ -32,3 +32,14 @@ class AnimeFacesDataset(Dataset):
                                                         std=[0.5 for _ in range(cfg.CHANNELS_IMG)])
                                    ])
 
+
+class AnimeFacesNoise(Dataset):
+    """Help class for make GIF from latent space"""
+    def __init__(self, noise):
+        self.noise = noise
+
+    def __getitem__(self, idx):
+        return self.noise[idx]
+
+    def __len__(self):
+        return len(self.noise)
