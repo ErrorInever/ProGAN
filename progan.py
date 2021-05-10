@@ -62,7 +62,11 @@ if __name__ == '__main__':
         print("==> Generate GIF...")
         images = latent_space_interpolation_sequence(noise, step_interpolation=args.steps)
         data = AnimeFacesNoise(images)
-        dataloader = DataLoader(data, batch_size=4, num_workers=2, pin_memory=True)
+        if device == 'cuda':
+            dataloader = DataLoader(data, batch_size=4, num_workers=0, pin_memory=True)
+        else:
+            dataloader = DataLoader(data, batch_size=4, num_workers=2)
+
         output = []
         for batch in dataloader:
             images = batch.to(device)
@@ -76,7 +80,7 @@ if __name__ == '__main__':
         for batch in output:
             for img in batch:
                 img = img.detach().permute(1, 2, 0)
-                images.append(img.numpy())
+                images.append(img.cpu().numpy())
         save_img_name = 'result.gif'
         save_path = os.path.join(out_path, save_img_name)
         imageio.mimsave(save_path, images, fps=8)
