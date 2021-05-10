@@ -62,8 +62,8 @@ if __name__ == '__main__':
         print("==> Generate GIF...")
         images = latent_space_interpolation_sequence(noise, step_interpolation=args.steps)
         data = AnimeFacesNoise(images)
-        if device == 'cuda':
-            dataloader = DataLoader(data, batch_size=4, num_workers=0, pin_memory=True)
+        if args.device == 'cuda':
+            dataloader = DataLoader(data, batch_size=4)
         else:
             dataloader = DataLoader(data, batch_size=4, num_workers=2)
 
