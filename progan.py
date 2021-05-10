@@ -65,6 +65,7 @@ if __name__ == '__main__':
         dataloader = DataLoader(data, batch_size=4, num_workers=2, pin_memory=True)
         output = []
         for batch in dataloader:
+            images = batch.to(device)
             res = gen(images, alpha, step)
             if args.resize and isinstance(args.resize, int):
                 print(f"==> Resize images to {args.resize}px")
